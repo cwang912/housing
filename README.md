@@ -21,4 +21,17 @@ Take the census tract data for Cuyahoga County, ID 035
 
 Add attributes to the GeoJSON file, mapping the id property from the shapefile (originally) to the column title in the csv file
 
-``` topojson -o output35.json -e cleveland_housing_age.csv --id-property=+NAME,+CensusTract -p since05=+Since05 -p 00to05=+00to05 -p 90to99=+90to99 -p 80to89=+80to89 -p 70to79=+70to79 -p 60to69=+60to69 -p 50to59=+50to59 -p 40to49=+40to49 -p pre40=+Pre40 -- input35.json ```
+``` topojson \
+-o output35.json \
+-e cleveland_housing_age.csv \
+--id-property=+NAME,+CensusTract \
+-p since05=+Since05 \
+-p 00to05=+00to05 \
+-p 90to99=+90to99 \
+-p 80to89=+80to89 \
+-p 70to79=+70to79 \
+-p 60to69=+60to69 \
+-p 50to59=+50to59 \
+-p 40to49=+40to49 \
+-p pre40=+Pre40 
+--input35.json ```
