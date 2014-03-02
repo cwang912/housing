@@ -33,6 +33,6 @@ topojson \
 -p 60to69=+60to69 \
 -p 50to59=+50to59 \
 -p 40to49=+40to49 \
--p pre40=+Pre40 
+-p pre40=+Pre40 \
 --input35.json 
 ```
