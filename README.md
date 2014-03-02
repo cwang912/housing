@@ -4,8 +4,7 @@ Cuyahoga County Plot
 Map of number and age of buildings in Cleveland by census tract. Future planes include employement, income, and foreclosure data.
 
 
-Converting ESRI shapefile to TopoJSON format
-============================================
+# Converting ESRI shapefile to TopoJSON format
 
 Make sure that ogr2 and TopoJSON are installed properly, see "Let's make a map!" (http://bost.ocks.org/mike/map/) for further instructions
 
@@ -21,7 +20,8 @@ Take the census tract data for Cuyahoga County, ID 035
 
 Add attributes to the GeoJSON file, mapping the id property from the shapefile (originally) to the column title in the csv file
 
-``` topojson \
+```bash 
+topojson \
 -o output35.json \
 -e cleveland_housing_age.csv \
 --id-property=+NAME,+CensusTract \
@@ -34,4 +34,5 @@ Add attributes to the GeoJSON file, mapping the id property from the shapefile (
 -p 50to59=+50to59 \
 -p 40to49=+40to49 \
 -p pre40=+Pre40 
---input35.json ```
+--input35.json 
+```
