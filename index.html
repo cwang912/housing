@@ -8,21 +8,32 @@ path {
   stroke-linejoin: round;
 }
 
-.tracts {
-  fill: none;
-  stroke: #fff;
-  stroke-linejoin: round;
+.title {
+  font: 200 16px Helvetica Neue;
+  fill: #100;
 }
 
-.q0-9 { fill:rgb(247,251,255);}
-.q1-9 { fill:rgb(222,235,247);}
-.q2-9 { fill:rgb(198,219,239);}
-.q3-9 { fill:rgb(158,202,225);}
-.q4-9 { fill:rgb(107,174,214);}
-.q5-9 { fill:rgb(66,146,198);}
-.q6-9 { fill:rgb(33,113,181);}
-.q7-9 { fill:rgb(8,81,156);}
-.q8-9 { fill:rgb(8,48,107);}
+.key path {
+  display: none;
+}
+
+.key line {
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+svg {
+  font: 12px Helvetica Neue;
+}
+.caption {
+  font: 12px Helvetica Neue;
+  fill: #100;
+}
+
+.key line {
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
 
 </style>
 <body>
@@ -31,84 +42,147 @@ path {
 <script src="http://d3js.org/topojson.v1.min.js"></script>
 <script>
 
-var width = 1260,
-  height = 1000;
+var decades = ["pre40",
+  "40to49",
+  "50to59",
+  "60to69",
+  "70to79",
+  "80to89",
+  "90to99",
+  "00to05",
+  "since05"];
 
-var pre49 = d3.map();
+var decades_text = ["before 1940",
+  "between 1940 to 1949",
+  "between 1950 to 1959",
+  "between 1960 to 1969",
+  "between 1970 to 1979",
+  "between 1980 to 1989",
+  "between 1990 to 1999",
+  "between 2000 to 2005",
+  "since 2005"];
 
-var tooltip = d3.select("body")
-  .append("div")
-  .style("position", "absolute")
-  .style("z-index", "10")
-  .style("visibility", "hidden")
-  .text("a simple tooltip");
+var index = 0;
+var yearMin = 0;
+var yearMax = 8;
 
-var quantize = d3.scale.quantize()
-  .domain([0, 1500])
-  .range(d3.range(9).map(function(i) { return "q" + i + "-9"; }));
+var color = d3.scale.linear()
+  .domain([0,1500])
+  .range(["hsl(203,53%,90%)", "hsl(11,53%,20%)"])
+  .interpolate(d3.interpolateHcl);
 
-var svg = d3.select("body").append("svg")
-  .attr("width", width)
-  .attr("height", height);
+var ticks = d3.scale.threshold()
+  .domain([100,500,1500]);
+
+var x = d3.scale.linear()
+  .domain([0,1500])
+  .range([0,240]);
+
+var xAxis = d3.svg.axis()
+  .scale(x)
+  .orient("bottom")
+  .tickSize(12)
+    .tickValues(ticks.domain());
+
+var margin = {top: 20, right: 40, bottom: 30, left: 20},
+  width = 960 - margin.left - margin.right,
+  height = 800 - margin.top - margin.bottom;
 
 var projection = d3.geo.albers()
   .center([0,41.4])
   .rotate([81.6, 0])
   .parallels([37.2, 44.5])
-  .scale(100000)
+  .scale(80000)
   .translate([width/2, height/2]);
 
 var path = d3.geo.path()
   .projection(projection);
 
-queue()
-  .defer(d3.json, "output.json")
-  //.defer(d3.csv, "cleveland_housing_age.csv", function(d) { pre40.set(d.NAME, +d.Pre40) })
-  .await(plot)
+var svg = d3.select("body").append("svg")
+  .attr("width", width + margin.left + margin.right)
+  .attr("height", height + margin.top + margin.bottom);
+
+var title = svg.append("text")
+  .attr("class", "title")
+  .attr("dx", "4.2em")
+  .attr("dy", "4.2em")
+  .text("Buildings in Cleveland constructed " + decades_text[index]);
+
+var grad = svg.append('svg:defs')
+  .append('svg:linearGradient')
+    .attr('id', 'gradient')
+    .attr('x1', "0%")
+    .attr('y1', "0%")
+    .attr('x2', "100%")
+    .attr('y2', "0%")
+
+grad.append('svg:stop')
+  .attr('offset', '0%')
+  .attr("stop-color", "hsl(203,53%,90%)")
+  .attr("stop-opacity", 1);
+
+grad.append('svg:stop')
+  .attr('offset', '100%')
+  .attr("stop-color" ,"hsl(11,53%,20%)")
+  .attr("stop-opacity", 1);
+
+var g = svg.append("g")
+    .attr("class", "key")
+    .attr("transform", "translate(90,120)");
+
+g.append("rect")
+    .attr("height", 8)
+    // .attr("x", "4.2em")
+    // .attr("y", "6.2em")//function(d) { return d.440; })
+    .attr("width", 270)
+    .style("fill", "url(#gradient)");
+
+g.call(xAxis).append("text")
+  .attr("class", "caption")
+  // .attr("")
+  .attr("y", -6)
+  .text("Number of buildings");
 
 
-function plot(error, output) {
+d3.json("output.json", function(error, output) {
+  var tracts = topojson.feature(output, output.objects.input).features;
+
+  var buildings = tracts
+    .map(function(d) { return d.properties[decades[index]] ; })
+    .sort(function(a, b) { return a - b; });
+
+  color.domain([d3.quantile(buildings, .01), d3.quantile(buildings, .99)]);
+
   svg.append("g")
-      .attr("class", "tracts")
     .selectAll("path")
-      .data(topojson.feature(output, output.objects.input).features)
-      // console.log(topojson.feature(output, output.objects.input).features)
-      // .data(output.objects.input.geometries)
+      .data(tracts)
     .enter().append("path")
-      .attr("class", function(d) { return quantize(d.properties.pre40) ; })//quantize(pre40.get(d.NAME)); })
-      // .attr("class", function(d) { return d.pre40; })
+      .style("fill", function (d) { return color(d.properties[decades[index]]); })
       .attr("d", path)
-      .on("mouseover", function(){return tooltip.style("visibility", "visible");})
-      .on("mousemove", function(){return tooltip.style("top", (event.pageY-10)+"px").style("left",(event.pageX+10)+"px");})
-      .on("mouseout", function(){return tooltip.style("visibility", "hidden");});
 
-  svg.append("path")
-    .datum(topojson.mesh(output))
-    .attr("class", "tracts")
-    .attr("d", path);
-      
-;}
+  window.focus();
+  d3.select(window).on("keydown", function() {
+    switch (d3.event.keyCode) {
+      case 37: index = Math.max(yearMin, index - 1); break;
+      case 39: index = Math.min(yearMax, index + 1); break;
+    }
+    update()
+  });
 
-// svg.append("text")
-//         .attr("x", (width / 2))             
-//         .attr("y", 0 - (margin.top / 2))
-//         .attr("text-anchor", "middle")  
-//         .style("font-size", "16px") 
-//         .style("text-decoration", "underline")  
-//         .text("Age and number of buildings in Cleveland");
+  function update() {
 
-// function plot(error, output) {
-//   svg.append("g")
-//       // .attr("class", "tracts")
-//     .selectAll("path")
-//       .data(topojson.feature(output, output.objects.input).features)
-//       // console.log(topojson.feature(output, output.objects.input).features)
-//       // .data(output.objects.input.geometries)
-//     .enter().append("path")
-//       .attr("class", function(d) { return quantize(d.properties.pre40) ; })//quantize(pre40.get(d.NAME)); })
-//       // .attr("class", function(d) { return d.pre40; })
-//       .attr("d", path)
-      
-//       ;}
+
+    svg.selectAll("path")
+        .data(tracts)
+      .transition()
+        .style("fill", function (d) { return color(d.properties[decades[index]]); })      
+        .duration(500)
+    
+    title.transition()
+        .duration(500)
+      .text("Buildings in Cleveland constructed " + decades_text[index])
+  }
+});
+
 </script>
 
