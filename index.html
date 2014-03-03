@@ -4,8 +4,8 @@
 
 path {
   fill: none;
-  stroke: #fff;
-  stroke-linejoin: round;
+/*  stroke: #fff;
+  stroke-linejoin: round;*/
 }
 
 .title {
@@ -71,8 +71,28 @@ var color = d3.scale.linear()
   .range(["hsl(203,53%,90%)", "hsl(11,53%,20%)"])
   .interpolate(d3.interpolateHcl);
 
+var margin = {top: 20, right: 40, bottom: 30, left: 20},
+  width = 800 - margin.left - margin.right,
+  height = 600 - margin.top - margin.bottom;
+
+var projection = d3.geo.albers()
+  .center([0,41.48]) // vertical
+  .rotate([81.68, 0]) // horizontal 
+  .parallels([37.1, 44.5]) 
+  .scale(85000)
+  .translate([width/2, height/2]);
+
+var path = d3.geo.path()
+  .projection(projection);
+
+var svg = d3.select("body").append("svg")
+  .attr("width", width + margin.left + margin.right)
+  .attr("height", height + margin.top + margin.bottom);
+
+// TITLE AND LEGEND
+
 var ticks = d3.scale.threshold()
-  .domain([100,500,1500]);
+  .domain([100,800,1500]);
 
 var x = d3.scale.linear()
   .domain([0,1500])
@@ -84,29 +104,11 @@ var xAxis = d3.svg.axis()
   .tickSize(12)
     .tickValues(ticks.domain());
 
-var margin = {top: 20, right: 40, bottom: 30, left: 20},
-  width = 960 - margin.left - margin.right,
-  height = 800 - margin.top - margin.bottom;
-
-var projection = d3.geo.albers()
-  .center([0,41.4])
-  .rotate([81.6, 0])
-  .parallels([37.2, 44.5])
-  .scale(80000)
-  .translate([width/2, height/2]);
-
-var path = d3.geo.path()
-  .projection(projection);
-
-var svg = d3.select("body").append("svg")
-  .attr("width", width + margin.left + margin.right)
-  .attr("height", height + margin.top + margin.bottom);
-
 var title = svg.append("text")
   .attr("class", "title")
-  .attr("dx", "4.2em")
+  .attr("dx", "3.2em")
   .attr("dy", "4.2em")
-  .text("Buildings in Cleveland constructed " + decades_text[index]);
+  .text("Buildings in Cuyahoga County constructed " + decades_text[index]);
 
 var grad = svg.append('svg:defs')
   .append('svg:linearGradient')
@@ -132,32 +134,31 @@ var g = svg.append("g")
 
 g.append("rect")
     .attr("height", 8)
-    // .attr("x", "4.2em")
-    // .attr("y", "6.2em")//function(d) { return d.440; })
     .attr("width", 270)
     .style("fill", "url(#gradient)");
 
 g.call(xAxis).append("text")
   .attr("class", "caption")
-  // .attr("")
   .attr("y", -6)
   .text("Number of buildings");
 
 
+// PLOT
+
 d3.json("output.json", function(error, output) {
+
   var tracts = topojson.feature(output, output.objects.input).features;
 
   var buildings = tracts
-    .map(function(d) { return d.properties[decades[index]] ; })
+    .map(function(d) { return d.properties[decades[0]] ; })
     .sort(function(a, b) { return a - b; });
-
   color.domain([d3.quantile(buildings, .01), d3.quantile(buildings, .99)]);
 
-  svg.append("g")
-    .selectAll("path")
+  svg.selectAll("path")
       .data(tracts)
     .enter().append("path")
-      .style("fill", function (d) { return color(d.properties[decades[index]]); })
+      .style("fill", function (d) { 
+          return color(d.properties[decades[0]]); })
       .attr("d", path)
 
   window.focus();
@@ -166,22 +167,19 @@ d3.json("output.json", function(error, output) {
       case 37: index = Math.max(yearMin, index - 1); break;
       case 39: index = Math.min(yearMax, index + 1); break;
     }
-    update()
-  });
-
-  function update() {
-
 
     svg.selectAll("path")
         .data(tracts)
       .transition()
-        .style("fill", function (d) { return color(d.properties[decades[index]]); })      
-        .duration(500)
+        .style("fill", function (d) {
+          return color(d.properties[decades[index]]); })    
+        .duration(750)  
+        .attr("d", path)
     
     title.transition()
-        .duration(500)
-      .text("Buildings in Cleveland constructed " + decades_text[index])
-  }
+        .duration(750)
+      .text("Buildings in Cuyahoga County constructed " + decades_text[index])
+  });
 });
 
 </script>
