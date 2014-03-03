@@ -4,8 +4,6 @@
 
 path {
   fill: none;
-/*  stroke: #fff;
-  stroke-linejoin: round;*/
 }
 
 .title {
@@ -142,6 +140,7 @@ g.call(xAxis).append("text")
   .attr("y", -6)
   .text("Number of buildings");
 
+var plot = svg.append("g")
 
 // PLOT
 
@@ -151,11 +150,11 @@ d3.json("output.json", function(error, output) {
 
   var buildings = tracts
     .map(function(d) { return d.properties[decades[0]] ; })
-    .sort(function(a, b) { return a - b; });
+    .sort(function(a, b) { return a - b; }); 
   color.domain([d3.quantile(buildings, .01), d3.quantile(buildings, .99)]);
 
-  svg.selectAll("path")
-      .data(tracts)
+  plot.selectAll("path")
+      .data(topojson.feature(output, output.objects.input).features)
     .enter().append("path")
       .style("fill", function (d) { 
           return color(d.properties[decades[0]]); })
@@ -168,7 +167,7 @@ d3.json("output.json", function(error, output) {
       case 39: index = Math.min(yearMax, index + 1); break;
     }
 
-    svg.selectAll("path")
+    plot.selectAll("path")
         .data(tracts)
       .transition()
         .style("fill", function (d) {
