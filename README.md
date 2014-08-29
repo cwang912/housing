@@ -1,7 +1,7 @@
 Cuyahoga County Plot
 ====================
 
-Map of number and age of buildings in Cleveland by census tract. Future planes include employement, income, and foreclosure data.
+Map of number and age of buildings in Cleveland by census tract. Future plans include employement, income, and foreclosure data, etc.
 
 
 # Converting ESRI shapefile to TopoJSON format
@@ -36,3 +36,5 @@ topojson \
 -p pre40=+Pre40 \
 --input35.json 
 ```
+
+Note: delete tract 9900, as it represents the lake itself and does not contain useful information (to the best of my knowledge).
